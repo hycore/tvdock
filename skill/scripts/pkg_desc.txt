@@ -1,0 +1,31 @@
+# 人话对照表:包名|短名|它是什么(给用户看)|关掉后的影响(给用户看)
+# 供 tv_wizard.sh 和对话式向导使用;新增包在此登记,禁止在代码里硬编码描述
+com.xiaomi.mitv.advertise|开机广告|开电视时先播一段广告|开机直接进画面,更快
+com.miui.systemAdSolution|屏幕广告|电视首页的推荐位、弹窗推广|首页更干净,不再弹推广
+com.miui.tv.analytics|使用统计|记录"看了什么节目、看了多久"并上传|不再上传观看记录,更隐私
+com.xiaomi.devicereport|设备信息上报|把电视的运行信息发回厂家|信息不再外发
+com.xiaomi.mitv.kuyun.acr|声音采集|通过识别电视发出的声音判断你在看什么|不再采集声音特征
+com.mitv.care|运营消息|厂家推送的活动、促销消息|不再收到推送
+com.xm.webcontent|推广内容|首页里的推广图文内容|首页更干净
+com.duokan.videodaily|视频日报|每天自动推送的推荐视频|不再自动推送
+com.cmgame.gamehalltv|游戏大厅|电视上的游戏下载入口|游戏入口消失(不影响看电视)
+com.xiaomi.gamecenter.sdk.service.mibox|游戏服务|游戏登录/支付的底层服务|游戏相关功能不可用
+com.xiaomi.mibox.gamecenter|游戏中心|电视上的游戏管理|游戏管理功能消失
+com.xiaomi.tv.appupgrade|应用升级提醒|弹窗提示"某某应用可以更新了"|不再弹更新提醒(应用本身照常能用)
+com.xiaomi.mitv.upgrade|系统自动升级|电视系统自动下载安装新版本|系统不再自动升级。老机型已停止更新,无损失;且可防止升级把优化设置重置
+com.xiaomi.mibox.lockscreen|待机屏保|电视闲着不动时轮播的图片(多为官方推广图)|待机时不再轮播图片
+com.cibn.tv|酷喵(优酷TV版)|在线视频应用|优酷节目无法观看
+com.pptv.tvsports|聚体育|体育直播应用|体育直播无法观看
+com.sohuott.tv.vod.xiaomi|搜狐视频|在线视频应用|搜狐节目无法观看
+com.xiaodianshi.tv.yst|云视听小电视(B站TV版)|哔哩哔哩电视版|B站节目无法观看
+com.gitvdemo.video|银河奇异果(爱奇艺TV版)|在线视频应用|爱奇艺节目无法观看
+com.hpplay.happyplay.aw|乐播投屏|把手机画面投到电视上|手机投屏功能不可用
+com.tencent.qqmusictv|QQ音乐|电视上的音乐应用|QQ音乐无法使用
+com.xiaomi.mitv.shop|小米商城|电视上购物|购物入口消失
+com.mitv.shoplugin|商城插件|购物功能的支撑组件|购物功能不可用
+com.mitv.appstore.component.land|应用中心|电视上的应用商店|电视上不能下载新应用(用电脑装不受影响)
+com.xiaomi.tweather|天气|天气预报|天气预报入口消失
+com.xiaomi.mimusic|小米音乐|电视上的音乐应用|小米音乐无法使用
+com.xiaomi.mitv.mediaexplorer|媒体浏览器|播放U盘/本地文件|U盘文件播放入口消失(不影响安装U盘里的APK)
+com.xiaomi.mitv.pay|支付|电视上的支付功能|电视上不能付款
+com.xiaomi.mitv.payment|支付组件|支付功能的支撑组件|电视上不能付款
