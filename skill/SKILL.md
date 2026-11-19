@@ -1,7 +1,8 @@
 # 小米电视优化 Skill(AI 用)
 
-> 适用:MIUI TV 1.3.x(Android 4.4.4)小米电视/盒子;已验证机型:小米电视 3S 48"(hancock)
-> 安全性:所有操作可逆(`pm unblock` / `pm enable`),只收起不删除,不碰系统核心
+> 适用:MIUI TV 1.3.x(Android 4.4.4)与 MIUI TV for Android 9(SDK 28)小米电视/盒子
+> 已验证机型:小米电视 3S 48"(hancock,Android 4.4.4)、小米电视 MiTV-ASTP0(Android 9)
+> 安全性:所有操作可逆——旧系统 `pm unblock`/`pm enable`,Android 9+ `cmd package install-existing` 找回(见 `_freeze.sh` 版本感知链);不碰系统核心
 
 ## 第一原则:AI 执行一切,用户只回答问题
 
@@ -90,10 +91,20 @@ AI 先扫描真实状态:`adb shell pm list packages`,按 `scripts/pkg_desc.txt`
 
 ### 第 6 步:执行(AI 自己做,逐项验证)
 
-每个包按顺序:`pm block <包名>` → `pm list packages -d` 验证 → 失败则 `pm disable-user --user 0 <包名>` → 再验证。每项之间 `sleep 0.5`。
+使用版本感知冻结链(`scripts/_freeze.sh`,每级执行后验证,失败自动降级):
 
-执行时向用户用人话播报进度:"正在关闭:开机广告… ✔"。
+```bash
+source scripts/_freeze.sh
+freeze_pkg <包名>   # Android 9+ 走 pm uninstall --user 0(持久)→ disable-user 降级
+                    # API 24~27 走 pm suspend → disable-user
+                    # 旧系统走 pm disable-user → pm block
+```
+
+每项之间 `sleep 0.5`。执行时向用户用人话播报进度:"正在关闭:开机广告… ✔"。
 失败的项继续执行下一项,最后告知:"这一项没成功,但不影响其他"。
+
+> ⚠️ Android 9+(SDK 28)实机结论:`pm block` 命令不存在;`pm suspend` 在小米电视重启后**不持久**。
+> 广告类组件一律以 `pm uninstall --user 0` 为准(跨重启持久,`cmd package install-existing` 随时找回)。
 
 ### 第 7 步:人话报告(必须)
 
@@ -106,7 +117,8 @@ AI 先扫描真实状态:`adb shell pm list packages`,按 `scripts/pkg_desc.txt`
 
 ### 用户反悔:全部恢复
 
-AI 执行 `pm list packages -d` → 对每个包 `pm unblock` + `pm enable` → 验证。完成后提醒:"系统自动升级恢复后,电视可能自动升级,升级会重置之前的优化。"
+AI 执行 `bash scripts/tv_rollback.sh <电视IP>`(已覆盖全状态:block/suspend/disable/uninstall)。
+单项手动恢复按冻结方式对应:`pm unblock` / `pm unsuspend` + `pm enable` / Android 9+ 卸载的用 `cmd package install-existing <包名>` 找回。完成后提醒:"系统自动升级后,电视可能自动升级,升级会重置之前的优化。"
 
 ## 可选:终端自助向导(用户想自己动手时才提)
 
@@ -120,7 +132,7 @@ AI 执行 `pm list packages -d` → 对每个包 `pm unblock` + `pm enable` → 
 |---|---|---|
 | `env_check.sh` | `bash scripts/env_check.sh [--install]` | AI 环境自检 + adb 跨平台自动安装 |
 | `tv_status.sh` | `bash scripts/tv_status.sh <电视IP>` | 冻结包/第三方包/总包数总览 |
-| `tv_ads_off.sh` | `bash scripts/tv_ads_off.sh <电视IP>` | 一键冻结 13 个广告/遥测组件 |
+| `tv_ads_off.sh` | `bash scripts/tv_ads_off.sh <电视IP>` | 一键冻结 17 个广告/遥测组件(13 基础 + 4 深查补删) |
 | `tv_rollback.sh` | `bash scripts/tv_rollback.sh <电视IP>` | 一键解冻全部 blocked 包 |
 | `tv_install.sh` | `bash scripts/tv_install.sh <电视IP> <apk路径>` | 静默安装(uiautomator 自动点确认) |
 | `adb_keepalive.sh` | `bash scripts/adb_keepalive.sh <电视IP>` & | ADB 心跳保活+断线重连 |
@@ -158,13 +170,44 @@ bash scripts/adb_keepalive.sh <电视IP> &
 - 恢复:**让用户手动重启一次电视**(遥控器或断电重启均可,重置 PackageManager),等开机完成后**重新执行同一批操作**——所有脚本幂等,重跑无副作用
 - 最终验证:重跑后再抽查 `pm list packages -d`,并向用户复述实际生效清单,而不是复述"执行过的"清单
 
+### 坑 3:Android 9 电视(MiTV-ASTP0 实测)没有 `pm block`
+
+- `pm block` 返回 `Unknown command: block`(该子命令仅存在于旧版 MIUI TV/Android 4.4)
+- 对策:按 SDK 分档选首选命令(`_freeze.sh` 已实现)——SDK≥28 直接 `pm uninstall --user 0`(实测 suspend 在小米电视**重启后不持久**,5 个包全部复活;卸载则跨重启持久);SDK 24~27 用 `pm suspend`;更旧用 `pm disable-user`/`pm block`。每级执行后验证,失败自动降级
+
+### 坑 4:漏网组件排查 + 开机广告"复活"误判
+
+- 用户报"开机还有广告"≠ 开机广告组件回来了:启动阶段会临时拉起存活的推广组件(如 duokan.videodaily)
+- 深查曾发现 4 个漏网遥测/推送组件(miui.analytics/tvpush/healthdiagnosis/cloudcontrol),已入清单补删(现共 17 项)
+- 判定口诀:先 `pm path` 确认组件在不在 → 在 = 没删干净;不在 = 看启动阶段还有谁在拉起(重跑 skill 即可)
+- **gamecenter / upgrade 两组件会被开机流程自动重装**(区别于"临时拉起"):重启后 `pm path` 又能查到。不是 skill 失效,重跑一遍即可;根治需路由器 DNS 屏蔽上游下载源(`docs/广告域名清单-路由器DNS屏蔽.txt`)
+
+### 坑 5:/vendor 分区包 suspend/disable 均拒绝
+
+- 部分包(如 com.miui.systemAdSolution)位于 /vendor 分区:`pm suspend` 与 `pm disable-user` 都报权限拒绝
+- 对策:`pm uninstall --user 0` 对 /vendor 包同样生效(隐藏用户副本)
+- 边界:系统分区文件仍在,恢复出厂或 OTA 会回归——届时重跑本 skill 即可
+
+### 坑 6:AdGuard 私人 DNS(DoT)整机屏蔽在大陆网络不可达
+
+- `settings put private_dns_mode hostname` + `dns.adguard.com` 后,电视**所有**域名解析失败(baidu 也 unknown host)
+- 根因:大陆网络到境外 AdGuard DoT 不通
+- 处置:**立即回滚** `settings put private_dns_mode off`;域名屏蔽改走**路由器端**(AdGuard Home/OpenWrt,清单见 `docs/广告域名清单-路由器DNS屏蔽.txt`)
+- 规矩:改 DNS 类设置必须当场用 `ping` 验证连通性,失败立即回滚,不留"整机断网"的电视给用户
+
+### 坑 7:/etc/hosts 只读,本机 hosts 屏蔽不可行
+
+- `/etc/hosts` 属 root,系统分区只读;`adb root` 在生产固件被拒("adbd cannot run as root in production builds")
+- 结论:非 root 电视本机 hosts 方案不可行,与坑 6 同走 DNS 层(路由器端)替代
+- 另注意:App 内业务广告(如奇异果贴片、GITV 服务端贴片)来自**内容服务端**,系统层清理无法去除,要向用户如实说明边界
+
 ## 执行规则(AI 必须遵守)
 
 1. **每个 adb 命令前检查连接**:电视休眠时端口关闭,需重试或引导用户唤醒
 2. **`pm block` 可能静默失败**:执行后必须 `pm list packages -d` 验证;失败退 `pm disable-user --user 0`;批量操作前后各统计一次生效数,生效数与预期不符时按"已知坑 2"重启电视后重跑
 3. **批量操作每步 sleep 0.5**:避免系统响应不及时丢命令
 4. **安全守卫**:自动点确认框时,检测到"删除/卸载"字样必须跳过(tv_install.sh 已内置)
-5. **只收起不卸载**:向导路径保证 100% 可恢复;卸载仅在用户明确要求且提醒后进行
+5. **可逆性优先,方式按系统版本选**:旧系统(Android 4.4)用 `pm block`/`disable-user` 收起即可;Android 9+(坑 3)广告组件必须 `pm uninstall --user 0` 才持久——同样是可逆的(`cmd package install-existing` 找回),向用户说明"随时可找回"
 6. **不动系统核心**:直播播放框架、设置、遥控、帐号(PACKAGES.md 红色区)
 7. **包名只出现在执行和报告文件里**,对用户说话一律用人话名
 8. **安装确认必须提前告知**:电视上安装任何应用都会弹确认框(安全设计,无法绕过)。AI 应提前说"等下电视上会弹一个确认框,您按一下'继续安装'就行";用 tv_install.sh 时自动守护点击,失败则请用户手动按
@@ -173,8 +216,11 @@ bash scripts/adb_keepalive.sh <电视IP> &
 
 ```bash
 SER=<电视IP>:5555
-adb -s $SER shell pm list packages -d          # 被收起的包
-adb -s $SER shell pm unblock <包名>            # 恢复单项
-adb -s $SER shell pm enable <包名>             # disable-user 的恢复
-bash scripts/tv_rollback.sh <电视IP>           # 一键全部恢复
+adb -s $SER shell pm list packages -d          # 被收起的包(disable)
+adb -s $SER shell pm list packages             # 核对卸载的包是否还在(--user 0 卸载后 pm path 为空)
+adb -s $SER shell pm unblock <包名>            # 恢复单项(block)
+adb -s $SER shell pm unsuspend <包名>          # 恢复单项(suspend)
+adb -s $SER shell pm enable <包名>             # 恢复单项(disable-user)
+adb -s $SER shell cmd package install-existing <包名>   # 找回被 uninstall --user 0 的包(Android 9+)
+bash scripts/tv_rollback.sh <电视IP>           # 一键全部恢复(全状态覆盖)
 ```

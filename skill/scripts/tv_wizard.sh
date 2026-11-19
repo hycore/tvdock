@@ -111,18 +111,10 @@ echo "  ✔ 连上了:${MODEL:-电视}(IP $TV_IP)"
 desc_of(){ grep "^$1|" "$DESC" 2>/dev/null | head -1 | cut -d'|' -f"$2"; }
 installed(){ "$ADB" -s "$SER" shell pm list packages 2>/dev/null | tr -d '\r' | sed 's/package://' | grep -qx "$1"; }
 
-# 收起一个功能/应用:先 pm block,不行再 pm disable-user;两者都可在恢复模式找回
-freeze_pkg(){
-  "$ADB" -s "$SER" shell pm block "$1" >/dev/null 2>&1; sleep 0.5
-  "$ADB" -s "$SER" shell pm list packages -d 2>/dev/null | tr -d '\r' | grep -qx "package:$1" && return 0
-  "$ADB" -s "$SER" shell pm disable-user --user 0 "$1" >/dev/null 2>&1; sleep 0.5
-  "$ADB" -s "$SER" shell pm list packages -d 2>/dev/null | tr -d '\r' | grep -qx "package:$1"
-}
-unfreeze_pkg(){
-  "$ADB" -s "$SER" shell pm unblock "$1" >/dev/null 2>&1
-  "$ADB" -s "$SER" shell pm enable "$1" >/dev/null 2>&1
-  ! "$ADB" -s "$SER" shell pm list packages -d 2>/dev/null | tr -d '\r' | grep -qx "package:$1"
-}
+source "$(dirname "$0")/_freeze.sh"   # 版本感知实现(block/suspend/uninstall 自动降级)
+# 收起/恢复:统一走 _freeze.sh 的版本感知实现
+freeze_pkg(){ freeze_pkg_impl "$1"; }
+unfreeze_pkg(){ restore_pkg_impl "$1"; }
 
 # ── 第 4 步:选套餐 ──
 say "第四步:选择优化套餐"

@@ -153,11 +153,28 @@ function Is-Installed($pkg) {
   return ($out -contains "package:$pkg")
 }
 function Test-Frozen($pkg) {
+  # 卸载(用户级):pm path 为空即已冻结
+  $path = (& $script:ADB -s $script:SER shell pm path $pkg 2>$null)
+  if (-not $path) { return $true }
+  # 挂起:dumpsys 里 suspended=true
+  $d = (& $script:ADB -s $script:SER shell dumpsys package $pkg 2>$null) | Out-String
+  if ($d -match "suspended=true") { return $true }
+  # 停用:packages -d 列表
   $out = (& $script:ADB -s $script:SER shell pm list packages -d 2>$null) | ForEach-Object { ("$_").Trim() }
   return ($out -contains "package:$pkg")
 }
 # 收起:先 block,不行再 disable-user(两者都可在恢复模式找回)
+# 版本感知冻结链:Android 9+ 优先卸载(持久);失败降级 suspend → disable-user → block
 function Freeze-Pkg($pkg) {
+  $sdk = (& $script:ADB -s $script:SER shell getprop ro.build.version.sdk).Trim()
+  if ([int]$sdk -ge 24) {
+    & $script:ADB -s $script:SER shell pm uninstall --user 0 $pkg 2>$null | Out-Null
+    Start-Sleep -Milliseconds 500
+    if (Test-Frozen $pkg) { return $true }
+    & $script:ADB -s $script:SER shell pm suspend $pkg 2>$null | Out-Null
+    Start-Sleep -Milliseconds 500
+    if (Test-Frozen $pkg) { return $true }
+  }
   & $script:ADB -s $script:SER shell pm block $pkg 2>$null | Out-Null
   Start-Sleep -Milliseconds 500
   if (Test-Frozen $pkg) { return $true }
@@ -167,7 +184,11 @@ function Freeze-Pkg($pkg) {
 }
 function Unfreeze-Pkg($pkg) {
   & $script:ADB -s $script:SER shell pm unblock $pkg 2>$null | Out-Null
+  & $script:ADB -s $script:SER shell pm unsuspend $pkg 2>$null | Out-Null
   & $script:ADB -s $script:SER shell pm enable $pkg 2>$null | Out-Null
+  if (-not (Test-Frozen $pkg)) {
+    & $script:ADB -s $script:SER shell cmd package install-existing $pkg 2>$null | Out-Null
+  }
   return (-not (Test-Frozen $pkg))
 }
 

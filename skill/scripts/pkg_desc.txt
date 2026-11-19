@@ -14,6 +14,10 @@ com.xiaomi.mibox.gamecenter|游戏中心|电视上的游戏管理|游戏管理�
 com.xiaomi.tv.appupgrade|应用升级提醒|弹窗提示"某某应用可以更新了"|不再弹更新提醒(应用本身照常能用)
 com.xiaomi.mitv.upgrade|系统自动升级|电视系统自动下载安装新版本|系统不再自动升级。老机型已停止更新,无损失;且可防止升级把优化设置重置
 com.xiaomi.mibox.lockscreen|待机屏保|电视闲着不动时轮播的图片(多为官方推广图)|待机时不再轮播图片
+com.miui.analytics|MIUI 统计|MIUI 层的使用统计上报(深查补删)|不再上传使用统计
+com.xiaomi.mitv.tvpush.tvpushservice|电视推送服务|厂家消息/广告的推送通道(深查补删)|不再收到厂家推送
+com.xiaomi.mitv.healthdiagnosis|健康诊断|电视运行状况诊断数据上报(深查补删)|诊断数据不再外发
+com.mitv.cloudcontrol|云控下发|厂家可远程下发配置/开关(深查补删)|不再接受厂家远程下发
 com.cibn.tv|酷喵(优酷TV版)|在线视频应用|优酷节目无法观看
 com.pptv.tvsports|聚体育|体育直播应用|体育直播无法观看
 com.sohuott.tv.vod.xiaomi|搜狐视频|在线视频应用|搜狐节目无法观看

@@ -3,3 +3,4 @@ skill/bin/
 skill/backups/
 .DS_Store
 *.log
+/backups/

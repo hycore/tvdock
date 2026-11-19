@@ -1,0 +1,31 @@
+小米电视 广告/遥测域名屏蔽清单(用于路由器 DNS 黑名单 / AdGuard Home / OpenWrt)
+生成: 2026-11-19  ·  适用: MIUI TV(Android 9)
+
+== 广告与推广 ==
+ad.xiaomi.com
+api.ad.xiaomi.com
+ad1.xiaomi.com
+data.mia.umi.uni
+de.pandora.xiaomi.com
+ottl7.v.mi-dun.com
+
+== 遥测与数据采集 ==
+tracking.miui.com
+api.jr.mi.com
+
+== 多看(推送/内容) ==
+misc.in.duokanbox.com
+a.in.duokanbox.com
+de.in.duokanbox.com
+
+== 使用方法 ==
+1. AdGuard Home(推荐,任意电脑/NAS 常开):
+   安装后把电视的 DNS 改为该电脑 IP(或路由器 DHCP 统一下发),
+   在 AdGuard Home 后台「过滤器」添加以上域名(拦截模式)。
+2. OpenWrt: 网络→DHCP/DNS→黑名单,逐条添加。
+3. 普通小米/华硕路由器: 部分机型支持"自定义 hosts/安全 DNS",
+   在路由器管理页搜索"DNS 过滤/广告过滤"功能添加。
+
+== 注意 ==
+- 只屏蔽上述广告/遥测域名,不影响视频正片播放(正片走 CDN 白名单域名)。
+- 内容平台(奇异果/GITV 等)的贴片广告是服务端拼流,DNS 屏蔽不掉,需平台会员。
