@@ -132,8 +132,9 @@ while ($true) {
     if ($a -eq "1") { $retrySame = $false } else { $retrySame = $true }
     continue
   }
-  Write-Host "  没连上。按顺序检查这三条:"
+  Write-Host "  没连上。按顺序检查这四条:"
   Write-Host "    ① 【ADB调试】真的打开了吗?→【设置】→【账号与安全】→【ADB调试】→【允许】"
+  Write-Host "       ※ 刚重启过电视的话,部分机型会把 ADB 开关自动关闭——重新打开即可"
   Write-Host "    ② 电视和电脑在同一个网络吗?→ 电视连的 WiFi 和电脑连的要是同一个路由器"
   Write-Host "    ③ IP 有没有看错?→ 到【设置】→【关于】→【本机信息】再核对一遍"
   Write-Host "  (也有可能电视在待机——用遥控器按任意键把它叫醒)"
