@@ -88,8 +88,21 @@ while :; do
     SER="${TV_IP}:5555"
   fi
   echo "  正在连接电视…"
+  echo "  (提示:第一次连接时,电视屏幕上可能会弹出\"是否允许调试\"的确认框,请用遥控器勾选\"始终允许\",再点\"允许/确定\")"
   "$ADB" connect "$SER" >/dev/null 2>&1; sleep 2
   connected && break
+  if [ "$("$ADB" devices 2>/dev/null | grep "$TV_IP" | awk '{print $2}')" = "unauthorized" ]; then
+    echo "  就差最后一步:电视屏幕上正弹着\"是否允许调试\"的框,请用遥控器勾选\"始终允许\",再点\"允许/确定\"。"
+    echo "  (没看到弹框就按遥控器任意键唤醒屏幕;点完后回车,这里会自动重试)"
+    echo ""
+    ask "  授权完成后回车重试 / 输 1=重新输入 IP / 输 n=退出: "
+    case "$ANS" in
+      n) echo "已退出。"; exit 3 ;;
+      1) RETRY=0 ;;
+      *) RETRY=1 ;;
+    esac
+    continue
+  fi
   echo "  没连上。按顺序检查这三条:"
   echo "    ① 【ADB调试】真的打开了吗?→【设置】→【账号与安全】→【ADB调试】→【允许】"
   echo "    ② 电视和电脑在同一个网络吗?→ 电视连的 WiFi 和电脑连的要是同一个路由器"

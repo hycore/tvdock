@@ -20,10 +20,17 @@ fi
 
 # ── 连接门禁:tv_gate <电视IP>,不可达退出码 3 ──
 tv_gate() {
-  local ip="$1" ser="${1}:5555"
+  local ip="$1" ser="${1}:5555" st
   "$ADB" connect "$ser" >/dev/null 2>&1
   sleep 2
-  if [ "$("$ADB" devices 2>/dev/null | grep "$ip" | awk '{print $2}')" != "device" ]; then
+  st=$("$ADB" devices 2>/dev/null | grep "$ip" | awk '{print $2}')
+  # Android 5+ 首次连接需在电视上确认 RSA 授权框,未确认时设备状态为 unauthorized
+  if [ "$st" = "unauthorized" ]; then
+    echo "电视在等您授权:请看电视屏幕,弹出\"是否允许调试\"时,勾选\"始终允许\",再点\"允许/确定\"。"
+    echo "点完后重新运行本脚本即可继续。"
+    exit 3
+  fi
+  if [ "$st" != "device" ]; then
     echo "电视不可达($ip): 请确认电视已开机、与本机同一局域网、且已开启 ADB 调试(设置→账号与安全→ADB调试)"
     exit 3
   fi

@@ -118,9 +118,20 @@ while ($true) {
     $script:SER  = "$tv`:5555"
   }
   Write-Host "  正在连接电视…"
+  Write-Host "  (提示:第一次连接时,电视屏幕上可能会弹出`"是否允许调试`"的确认框,请用遥控器勾选`"始终允许`",再点`"允许/确定`")"
   & $script:ADB connect $script:SER 2>$null | Out-Null
   Start-Sleep -Seconds 2
   if (Test-Connected) { break }
+  $dev = ((& $script:ADB devices 2>$null) -join "`n")
+  if ($dev -like ("*" + $script:TVIP + ":5555*unauthorized*")) {
+    Write-Host "  就差最后一步:电视屏幕上正弹着`"是否允许调试`"的框,请用遥控器勾选`"始终允许`",再点`"允许/确定`"。"
+    Write-Host "  (没看到弹框就按遥控器任意键唤醒屏幕;点完后回车,这里会自动重试)"
+    Write-Host ""
+    $a = Read-Host "  授权完成后回车重试 / 输 1=重新输入 IP / 输 n=退出"
+    if ($a -eq "n") { Write-Host "已退出。"; exit 3 }
+    if ($a -eq "1") { $retrySame = $false } else { $retrySame = $true }
+    continue
+  }
   Write-Host "  没连上。按顺序检查这三条:"
   Write-Host "    ① 【ADB调试】真的打开了吗?→【设置】→【账号与安全】→【ADB调试】→【允许】"
   Write-Host "    ② 电视和电脑在同一个网络吗?→ 电视连的 WiFi 和电脑连的要是同一个路由器"

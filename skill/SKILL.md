@@ -59,6 +59,7 @@ adb 装在 skill 自带 `bin/platform-tools/`,后续脚本自动识别,无需配
 拿到 IP 后 AI 执行 `adb connect <IP>:5555`。
 
 - IP 格式不对:温和指出"要 4 段数字用点隔开",请用户重新看一眼电视,**不要退出对话**
+- **首次连接预告(Android 5+ 必有)**:第一次连接前先告诉用户:"电视屏幕上马上会弹一个'是否允许调试'的框,请勾选'始终允许',再点'允许/确定'"。`adb devices` 显示 `unauthorized` 就是在等这一步,引导用户点完即可,授权一次后不再重复弹
 - 连不上:只说三条检查 ①ADB调试真的打开了吗 ②电视和电脑是同一个路由器/WiFi 吗 ③IP 核对了吗;补一句"也可能是电视在待机,用遥控器按任意键叫醒它"。重试 ≥2 次仍失败才建议用户稍后再来
 - 成功后执行 `adb shell getprop ro.product.model` 拿型号,向用户确认:"已连上您的 XXX 电视"
 
@@ -200,6 +201,13 @@ bash scripts/adb_keepalive.sh <电视IP> &
 - `/etc/hosts` 属 root,系统分区只读;`adb root` 在生产固件被拒("adbd cannot run as root in production builds")
 - 结论:非 root 电视本机 hosts 方案不可行,与坑 6 同走 DNS 层(路由器端)替代
 - 另注意:App 内业务广告(如奇异果贴片、GITV 服务端贴片)来自**内容服务端**,系统层清理无法去除,要向用户如实说明边界
+
+### 坑 8:Android 5+ 首次连接要在电视上确认 RSA 授权
+
+- 首次 `adb connect` 后设备状态为 `unauthorized`,电视屏幕弹"是否允许调试?"——用户必须勾选"始终允许"再点"允许/确定"
+- 授权信息存在电视端(`adb_keys`),之后重连不再弹;只有换电脑/重置调试授权才会重新出现
+- Android 4.4 时代无此机制,所以老机型上观察不到——**不要以老机经验判断新机型**
+- 脚本层:`_common.sh` 的 `tv_gate` 与双向导均已识别 unauthorized 并给出人话指引
 
 ## 执行规则(AI 必须遵守)
 
